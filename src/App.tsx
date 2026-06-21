@@ -37,6 +37,12 @@ function AppShell() {
         group: 'Sessions',
         run: () => addSession(`Session ${sessions.length + 1}`),
       },
+      {
+        id: 'export-csv',
+        label: 'Export session (CSV)',
+        group: 'Sessions',
+        run: () => window.dispatchEvent(new CustomEvent('cube:export-csv')),
+      },
     ]
     const sessionCmds: Command[] = sessions
       .filter((s) => s.id !== activeSession.id)
