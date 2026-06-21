@@ -12,6 +12,7 @@ import { TimerDisplay } from '@/components/timer/TimerDisplay'
 import { LastSolve } from '@/components/timer/LastSolve'
 import { SolveList } from '@/components/timer/SolveList'
 import { StatsBar } from '@/components/stats/StatsBar'
+import { StatsSheet } from '@/components/stats/StatsSheet'
 import { SessionSwitcher } from '@/components/sessions/SessionSwitcher'
 
 export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) {
@@ -28,6 +29,7 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
   } = useData()
   const { scramble, next } = useScramble(activeSession.event)
   const [inspection, setInspection] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
 
   const timer = useTimer({
     inspection,
@@ -73,6 +75,13 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
         </div>
         <div className="border-b border-border p-4">
           <StatsBar stats={stats} />
+          <button
+            type="button"
+            onClick={() => setStatsOpen(true)}
+            className="mt-3 w-full rounded-md border border-border py-1.5 text-xs text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            Detailed stats
+          </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-1">
           <SolveList solves={solves} onSetPenalty={setPenalty} onDelete={deleteSolve} />
@@ -121,6 +130,14 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
           />
         </div>
       </main>
+
+      <StatsSheet
+        open={statsOpen}
+        onOpenChange={setStatsOpen}
+        solves={solves}
+        stats={stats}
+        sessionName={activeSession.name}
+      />
     </div>
   )
 }

@@ -84,15 +84,36 @@ export function sessionMean(solves: Solve[]): number | null {
   return mean(solves)
 }
 
+/** Population standard deviation of non-DNF effective times. null if < 2 solves. */
+export function stdDev(solves: Solve[]): number | null {
+  const times = solves.filter((s) => s.penalty !== 'dnf').map(effectiveMs)
+  if (times.length < 2) return null
+  const m = times.reduce((a, b) => a + b, 0) / times.length
+  const variance = times.reduce((a, b) => a + (b - m) ** 2, 0) / times.length
+  return Math.sqrt(variance)
+}
+
+/** Rolling average-of-n at each index (null until enough solves / on DNF result). */
+export function rollingAverages(solves: Solve[], n: number): (number | null)[] {
+  return solves.map((_, i) =>
+    i + 1 >= n ? (n === 3 ? mean(solves.slice(i + 1 - n, i + 1)) : average(solves.slice(i + 1 - n, i + 1))) : null,
+  )
+}
+
 export interface SessionStats {
   count: number
   best: number | null
   currentMo3: number | null
   currentAo5: number | null
   currentAo12: number | null
+  currentAo50: number | null
+  currentAo100: number | null
   bestAo5: number | null
   bestAo12: number | null
+  bestAo50: number | null
+  bestAo100: number | null
   sessionMean: number | null
+  stdDev: number | null
 }
 
 /** Compute the full stat block for a chronological list of solves. */
@@ -103,8 +124,13 @@ export function computeStats(solves: Solve[]): SessionStats {
     currentMo3: currentAverage(solves, 3),
     currentAo5: currentAverage(solves, 5),
     currentAo12: currentAverage(solves, 12),
+    currentAo50: currentAverage(solves, 50),
+    currentAo100: currentAverage(solves, 100),
     bestAo5: bestAverage(solves, 5),
     bestAo12: bestAverage(solves, 12),
+    bestAo50: bestAverage(solves, 50),
+    bestAo100: bestAverage(solves, 100),
     sessionMean: sessionMean(solves),
+    stdDev: stdDev(solves),
   }
 }
