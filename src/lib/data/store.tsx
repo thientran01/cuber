@@ -111,8 +111,18 @@ function reducer(state: PersistedState, action: Action): PersistedState {
       return state.sessions[action.id] ? { ...state, activeSessionId: action.id } : state
 
     case 'mergeRemote': {
+      // NOTE — cloud sync is dormant until anonymous auth is enabled. This is a
+      // simple remote-wins merge; before turning sync on, harden it:
+      //   - per-row last-write-wins via `updated_at` (today remote always wins,
+      //     which can clobber an edit made during the initial fetch window)
+      //   - tombstones for offline deletes (else a deleted row is resurrected
+      //     from the remote snapshot on the next load)
+      //   - defer creating the default 'Main' session until after the first
+      //     merge (else a fresh device mints a duplicate)
+      // `cube_solves` has an ON DELETE CASCADE FK, so deleting a session does
+      // clean up its solves server-side.
       // Remote is authoritative for shared ids; local-only rows are preserved
-      // (and pushed separately). Deletions made while offline aren't synced.
+      // (and pushed separately).
       const sessions = { ...state.sessions, ...action.sessions }
       const solves = { ...state.solves, ...action.solves }
       const activeSessionId = sessions[state.activeSessionId]

@@ -98,6 +98,22 @@ export function useTimer({
     }
 
     function loop() {
+      // Stalling past the 17s inspection limit without starting a solve is a DNF.
+      if (
+        inspectionRef.current &&
+        machine.phase === 'inspect' &&
+        machine.inspectionStart &&
+        performance.now() - machine.inspectionStart > INSPECTION_DNF_MS
+      ) {
+        machine.phase = 'idle'
+        machine.inspectionStart = 0
+        machine.spaceDown = false
+        clearTimeout(machine.holdTimeout)
+        stopLoop()
+        publish()
+        onCompleteRef.current({ timeMs: 0, penalty: 'dnf' })
+        return
+      }
       publish()
       if (machine.phase !== 'idle') {
         machine.raf = requestAnimationFrame(loop)
@@ -211,11 +227,37 @@ export function useTimer({
       onSpaceUp()
     }
 
+    // Window lost focus (alt-tab, OS shortcut, tab switch) — the keyup may never
+    // arrive. Clear the held-key flag and abandon any prep/inspection so the
+    // next Space press is honored. A solve already running is left alone.
+    function resetToSafe() {
+      machine.spaceDown = false
+      clearTimeout(machine.holdTimeout)
+      if (machine.phase !== 'running' && machine.phase !== 'idle') {
+        machine.phase = 'idle'
+        machine.inspectionStart = 0
+        stopLoop()
+        publish()
+      }
+    }
+
+    function handleBlur() {
+      resetToSafe()
+    }
+
+    function handleVisibility() {
+      if (document.hidden) resetToSafe()
+    }
+
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', handleBlur)
+    document.addEventListener('visibilitychange', handleVisibility)
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', handleBlur)
+      document.removeEventListener('visibilitychange', handleVisibility)
       clearTimeout(machine.holdTimeout)
       cancelAnimationFrame(machine.raf)
     }

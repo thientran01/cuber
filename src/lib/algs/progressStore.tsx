@@ -3,7 +3,7 @@
  * localStorage-first with a dormant Supabase sync (activates once anonymous
  * auth is enabled). Mirrors the solve store's optimistic pattern.
  */
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { AlgSet, CaseProgress, CaseStatus } from '@/lib/algs/cases'
 import { fetchProgress, pushProgress } from '@/lib/data/supabase'
 
@@ -43,6 +43,11 @@ const ProgressContext = createContext<ProgressContextValue | null>(null)
 export function AlgProgressProvider({ children }: { children: ReactNode }) {
   const [map, setMap] = useState<ProgressMap>(() => load())
 
+  // Latest committed map, so event handlers read fresh state rather than the
+  // value captured in their render closure.
+  const mapRef = useRef(map)
+  mapRef.current = map
+
   useEffect(() => {
     save(map)
   }, [map])
@@ -60,7 +65,7 @@ export function AlgProgressProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const get = (set: AlgSet, id: string): CaseProgress => map[keyOf(set, id)] ?? DEFAULT
+  const get = (set: AlgSet, id: string): CaseProgress => mapRef.current[keyOf(set, id)] ?? DEFAULT
 
   const commit = (set: AlgSet, id: string, next: CaseProgress) => {
     setMap((prev) => ({ ...prev, [keyOf(set, id)]: next }))
@@ -79,12 +84,12 @@ export function AlgProgressProvider({ children }: { children: ReactNode }) {
   const recordResult = (set: AlgSet, id: string, { correct, ms }: { correct: boolean; ms?: number }) => {
     const cur = get(set, id)
     const reps = cur.reps + 1
+    // Correct: advance unknown -> learning -> learned. Incorrect: only demote
+    // learned -> learning; an unknown miss stays unknown (don't reward a miss).
     let status: CaseStatus = cur.status
     if (correct) {
       status = cur.status === 'unknown' ? 'learning' : 'learned'
     } else if (cur.status === 'learned') {
-      status = 'learning'
-    } else if (cur.status === 'unknown') {
       status = 'learning'
     }
     const bestRecognitionMs =
