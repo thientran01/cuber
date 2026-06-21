@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowsClockwise, X } from '@phosphor-icons/react'
 import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
@@ -33,12 +33,13 @@ function Segmented<T extends string>({
   onChange: (v: T) => void
 }) {
   return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface p-0.5 text-sm">
+    <div role="group" className="flex items-center gap-0.5 rounded-lg border border-border bg-surface p-0.5 text-sm">
       {options.map((o) => (
         <button
           key={o}
           type="button"
           onClick={() => onChange(o)}
+          aria-pressed={value === o}
           className={`rounded-md px-3 py-1 capitalize transition-colors ${
             value === o ? 'bg-surface-2 text-fg' : 'text-fg-muted hover:text-fg'
           }`}
@@ -56,6 +57,21 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
   const [set, setSet] = useState<AlgSet>('OLL')
   const [mode, setMode] = useState<Mode>('browse')
   const [drill, setDrill] = useState<{ c: AlgCase; scramble: string } | null>(null)
+  const drillCloseRef = useRef<HTMLButtonElement>(null)
+
+  // Drill modal: close on Esc and move focus into the dialog when it opens.
+  useEffect(() => {
+    if (!drill) return
+    const raf = requestAnimationFrame(() => drillCloseRef.current?.focus())
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDrill(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [drill])
 
   const cases = set === 'OLL' ? OLL_CASES : PLL_CASES
 
@@ -120,6 +136,9 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
             onClick={() => setDrill(null)}
           >
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${drill.c.set} ${drill.c.id} drill`}
               className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl"
               variants={fade}
               initial="hidden"
@@ -132,10 +151,11 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
                   {drill.c.set === 'OLL' ? `OLL ${drill.c.id}` : drill.c.name || drill.c.id}
                 </span>
                 <button
+                  ref={drillCloseRef}
                   type="button"
                   onClick={() => setDrill(null)}
-                  aria-label="Close"
-                  className="rounded-md p-1 text-fg-muted hover:bg-surface-2 hover:text-fg"
+                  aria-label="Close drill"
+                  className="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-surface-2 hover:text-fg"
                 >
                   <X size={16} />
                 </button>
