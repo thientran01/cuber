@@ -25,15 +25,21 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
   const [elapsed, setElapsed] = useState(0)
   const [tally, setTally] = useState({ got: 0, missed: 0 })
 
-  const next = useCallback(() => {
-    const pool = allCases.filter((c) => progress.get(set, c.id).status !== 'learned')
-    const c = pickFrom(pool.length ? pool : allCases)
-    setCurrent(c)
-    setScramble(recognitionStateAlg(c.algorithm))
-    setRevealed(false)
-    setStartedAt(performance.now())
-    setElapsed(0)
-  }, [allCases, progress, set])
+  const next = useCallback(
+    (excludeId?: string) => {
+      // Exclude the just-answered case: avoids an immediate repeat and sidesteps
+      // reading its not-yet-committed status from the pool filter.
+      const eligible = allCases.filter((c) => c.id !== excludeId)
+      const unlearned = eligible.filter((c) => progress.get(set, c.id).status !== 'learned')
+      const c = pickFrom(unlearned.length ? unlearned : eligible.length ? eligible : allCases)
+      setCurrent(c)
+      setScramble(recognitionStateAlg(c.algorithm))
+      setRevealed(false)
+      setStartedAt(performance.now())
+      setElapsed(0)
+    },
+    [allCases, progress, set],
+  )
 
   // New case when the set changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -47,7 +53,7 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
   const answer = (correct: boolean) => {
     progress.recordResult(set, current.id, { correct, ms: correct ? elapsed : undefined })
     setTally((t) => ({ got: t.got + (correct ? 1 : 0), missed: t.missed + (correct ? 0 : 1) }))
-    next()
+    next(current.id)
   }
 
   // Space reveals the answer.
