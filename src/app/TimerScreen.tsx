@@ -6,6 +6,7 @@ import { useScramble } from '@/hooks/useScramble'
 import { useTimer } from '@/hooks/useTimer'
 import { formatMs, formatSolveTime } from '@/lib/format'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { ScramblePanel } from '@/components/timer/ScramblePanel'
 import { TimerDisplay } from '@/components/timer/TimerDisplay'
 import { LastSolve } from '@/components/timer/LastSolve'
@@ -100,6 +101,7 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
               <Eye size={14} />
               Inspection {inspection ? 'on' : 'off'}
             </button>
+            <ThemeToggle />
           </div>
         </header>
 
