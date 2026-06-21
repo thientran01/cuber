@@ -82,6 +82,7 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
 
   const timer = useTimer({
     inspection,
+    disabled: statsOpen,
     onComplete: (result) => {
       const prevBest = stats.best
       const hadSolves = solves.length > 0
@@ -145,6 +146,8 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
             type="file"
             accept=".csv,text/csv"
             className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
             onChange={onImportFile}
           />
         </div>
@@ -188,8 +191,8 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
             <button
               type="button"
               onClick={onToggleFocus}
-              aria-label="Focus mode"
-              title="Focus mode"
+              aria-label="Enter focus mode"
+              title="Enter focus mode"
               className="grid size-8 place-items-center rounded-md border border-border text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
             >
               <CornersOut size={15} />
@@ -219,7 +222,7 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
             type="button"
             onClick={onToggleFocus}
             aria-label="Exit focus mode"
-            title="Exit focus mode (⌘K)"
+            title="Exit focus mode"
             className="fixed right-4 top-4 z-20 grid size-9 place-items-center rounded-md border border-border bg-surface text-fg-muted shadow-sm transition-colors hover:bg-surface-2 hover:text-fg"
           >
             <CornersIn size={16} />

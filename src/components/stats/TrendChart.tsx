@@ -31,6 +31,9 @@ export function TrendChart({ solves }: { solves: Solve[] }) {
   const singles = solves.map((s) => (s.penalty === 'dnf' ? null : effectiveMs(s)))
   const ao5 = rollingAverages(solves, 5)
   const finite = [...singles, ...ao5].filter((v): v is number => v != null)
+  if (finite.length === 0) {
+    return <p className="py-8 text-center text-xs text-fg-subtle">Not enough solves yet</p>
+  }
   const min = Math.min(...finite)
   const max = Math.max(...finite)
   const range = max - min || 1
