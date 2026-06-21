@@ -5,6 +5,7 @@ import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/case
 import { setupScrambleFor } from '@/lib/cube/setupScramble'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { CaseCard } from '@/components/trainer/CaseCard'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
 import { RecognitionTest } from '@/components/trainer/RecognitionTest'
@@ -17,7 +18,7 @@ interface Props {
 
 type Mode = 'browse' | 'recognize'
 
-const SETS: AlgSet[] = ['PLL', 'OLL']
+const SETS: AlgSet[] = ['OLL', 'PLL']
 
 function Segmented<T extends string>({
   options,
@@ -49,7 +50,7 @@ function Segmented<T extends string>({
 /** OLL/PLL trainer: reference browser + drill + recognition mode. */
 export function TrainerView({ view, onNavigate }: Props) {
   const progress = useAlgProgress()
-  const [set, setSet] = useState<AlgSet>('PLL')
+  const [set, setSet] = useState<AlgSet>('OLL')
   const [mode, setMode] = useState<Mode>('browse')
   const [drill, setDrill] = useState<{ c: AlgCase; scramble: string } | null>(null)
 
@@ -78,7 +79,10 @@ export function TrainerView({ view, onNavigate }: Props) {
           </span>
           <span className="text-sm font-medium tracking-tight">Cube Trainer</span>
         </div>
-        <NavTabs view={view} onNavigate={onNavigate} />
+        <div className="flex items-center gap-2">
+          <NavTabs view={view} onNavigate={onNavigate} />
+          <ThemeToggle />
+        </div>
       </header>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-5 py-3">
