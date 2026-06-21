@@ -1,7 +1,6 @@
-import 'scramble-display'
 import type { AlgCase } from '@/lib/algs/cases'
-import { caseStateAlg } from '@/lib/cube/setupScramble'
 import { STATUS_LABEL, useAlgProgress } from '@/lib/algs/progressStore'
+import { CaseDiagram } from '@/components/trainer/CaseDiagram'
 
 interface Props {
   c: AlgCase
@@ -24,27 +23,22 @@ export function CaseCard({ c, onDrill }: Props) {
 
   return (
     <div className="group flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-border-strong">
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => progress.cycleStatus(c.set, c.id)}
-            aria-label={`Status: ${STATUS_LABEL[status]} (click to change)`}
-            title={STATUS_LABEL[status]}
-            className={`size-2.5 shrink-0 rounded-full ${DOT[status]}`}
-          />
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          onClick={() => progress.cycleStatus(c.set, c.id)}
+          aria-label={`Status: ${STATUS_LABEL[status]} (click to change)`}
+          title={STATUS_LABEL[status]}
+          className={`mt-1 size-2.5 shrink-0 rounded-full ${DOT[status]}`}
+        />
+        <div className="flex min-w-0 flex-col leading-tight">
           <span className="text-sm font-medium text-fg">{title}</span>
-        </span>
-        {subtitle ? <span className="truncate text-[11px] text-fg-subtle">{subtitle}</span> : null}
+          {subtitle ? <span className="text-[11px] text-fg-subtle">{subtitle}</span> : null}
+        </div>
       </div>
 
       <div className="flex justify-center py-1">
-        <scramble-display
-          event="333"
-          scramble={caseStateAlg(c.algorithm)}
-          visualization="2D"
-          style={{ width: '128px', height: '96px' }}
-        />
+        <CaseDiagram c={c} size={104} />
       </div>
 
       <code className="nums block text-center text-[11px] leading-snug text-fg-muted">

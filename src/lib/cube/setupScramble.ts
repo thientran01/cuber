@@ -25,8 +25,3 @@ export function caseStateAlg(solution: string): string {
 export function setupScrambleFor(solution: string): string {
   return new Alg(`${randomAuf()} ${solution} ${randomAuf()}`).invert().toString()
 }
-
-/** The case state shown at a random recognition angle (for recognition drills). */
-export function recognitionStateAlg(solution: string): string {
-  return `${caseStateAlg(solution)} ${randomAuf()}`.trim()
-}

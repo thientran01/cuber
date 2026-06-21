@@ -1,12 +1,12 @@
-import 'scramble-display'
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowsClockwise, X } from '@phosphor-icons/react'
 import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
-import { caseStateAlg, setupScrambleFor } from '@/lib/cube/setupScramble'
+import { setupScrambleFor } from '@/lib/cube/setupScramble'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
 import { CaseCard } from '@/components/trainer/CaseCard'
+import { CaseDiagram } from '@/components/trainer/CaseDiagram'
 import { RecognitionTest } from '@/components/trainer/RecognitionTest'
 import { fade } from '@/lib/motion'
 
@@ -135,12 +135,7 @@ export function TrainerView({ view, onNavigate }: Props) {
               </div>
 
               <div className="flex justify-center py-2">
-                <scramble-display
-                  event="333"
-                  scramble={caseStateAlg(drill.c.algorithm)}
-                  visualization="2D"
-                  style={{ width: '180px', height: '135px' }}
-                />
+                <CaseDiagram c={drill.c} size={156} />
               </div>
 
               <code className="nums mb-4 block text-center text-sm text-fg">{drill.c.algorithm}</code>

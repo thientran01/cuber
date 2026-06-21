@@ -1,10 +1,11 @@
-import 'scramble-display'
 import { useCallback, useEffect, useState } from 'react'
 import { Check, X } from '@phosphor-icons/react'
 import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
-import { recognitionStateAlg } from '@/lib/cube/setupScramble'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { formatMs } from '@/lib/format'
+import { CaseDiagram } from '@/components/trainer/CaseDiagram'
+
+const randomAuf = () => Math.floor(Math.random() * 4)
 
 function pickFrom(cases: AlgCase[]): AlgCase {
   return cases[Math.floor(Math.random() * cases.length)]
@@ -19,7 +20,7 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
   const allCases = set === 'OLL' ? OLL_CASES : PLL_CASES
 
   const [current, setCurrent] = useState<AlgCase>(() => pickFrom(allCases))
-  const [scramble, setScramble] = useState(() => recognitionStateAlg(current.algorithm))
+  const [auf, setAuf] = useState(() => randomAuf())
   const [revealed, setRevealed] = useState(false)
   const [startedAt, setStartedAt] = useState(() => performance.now())
   const [elapsed, setElapsed] = useState(0)
@@ -33,7 +34,7 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
       const unlearned = eligible.filter((c) => progress.get(set, c.id).status !== 'learned')
       const c = pickFrom(unlearned.length ? unlearned : eligible.length ? eligible : allCases)
       setCurrent(c)
-      setScramble(recognitionStateAlg(c.algorithm))
+      setAuf(randomAuf())
       setRevealed(false)
       setStartedAt(performance.now())
       setElapsed(0)
@@ -77,12 +78,7 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
         <span className="text-fg-muted">{tally.missed} missed</span>
       </div>
 
-      <scramble-display
-        event="333"
-        scramble={scramble}
-        visualization="2D"
-        style={{ width: '240px', height: '180px' }}
-      />
+      <CaseDiagram c={current} auf={auf} size={208} />
 
       {revealed ? (
         <div className="flex flex-col items-center gap-3">
