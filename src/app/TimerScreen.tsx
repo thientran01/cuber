@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { CornersIn, CornersOut, Eye } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useData } from '@/lib/data/store'
+import { downloadCsv, parseCsv, solvesToCsv } from '@/lib/data/csv'
 import { useScramble } from '@/hooks/useScramble'
 import { useTimer } from '@/hooks/useTimer'
 import type { Theme } from '@/hooks/useTheme'
@@ -32,6 +33,7 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
     solves,
     stats,
     addSolve,
+    importSolves,
     setPenalty,
     deleteSolve,
     addSession,
@@ -40,6 +42,7 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
   const { scramble, next } = useScramble(activeSession.event)
   const [inspection, setInspection] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   // "New scramble" command (from the palette) regenerates the scramble.
   useEffect(() => {
@@ -47,6 +50,35 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
     window.addEventListener('cube:new-scramble', handler)
     return () => window.removeEventListener('cube:new-scramble', handler)
   }, [next])
+
+  // CSV export, kept in a ref so the palette's "Export" command sees fresh solves.
+  const exportRef = useRef<() => void>(() => {})
+  exportRef.current = () => {
+    if (solves.length === 0) {
+      toast.error('No solves to export')
+      return
+    }
+    const name = `${activeSession.name.replace(/\s+/g, '-').toLowerCase()}-solves.csv`
+    downloadCsv(name, solvesToCsv(solves))
+  }
+  useEffect(() => {
+    const handler = () => exportRef.current()
+    window.addEventListener('cube:export-csv', handler)
+    return () => window.removeEventListener('cube:export-csv', handler)
+  }, [])
+
+  const onImportFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const rows = parseCsv(await file.text())
+    if (rows.length === 0) {
+      toast.error('No solves found in that file')
+      return
+    }
+    importSolves(rows)
+    toast.success(`Imported ${rows.length} solve${rows.length === 1 ? '' : 's'}`)
+  }
 
   const timer = useTimer({
     inspection,
@@ -91,6 +123,29 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
             activeSession={activeSession}
             onSelect={setActiveSession}
             onAdd={() => addSession(`Session ${sessions.length + 1}`)}
+          />
+          <div className="mt-2 flex gap-1.5">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex-1 rounded-md border border-border py-1 text-[11px] text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            >
+              Import CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => exportRef.current()}
+              className="flex-1 rounded-md border border-border py-1 text-[11px] text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            >
+              Export CSV
+            </button>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={onImportFile}
           />
         </div>
         <div className="border-b border-border p-4">

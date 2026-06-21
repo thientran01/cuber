@@ -47,6 +47,7 @@ type Action =
   | { type: 'deleteSession'; id: string }
   | { type: 'setActiveSession'; id: string }
   | { type: 'mergeRemote'; sessions: Record<string, Session>; solves: Record<string, Solve> }
+  | { type: 'importSolves'; solves: Solve[] }
 
 function reducer(state: PersistedState, action: Action): PersistedState {
   switch (action.type) {
@@ -131,6 +132,12 @@ function reducer(state: PersistedState, action: Action): PersistedState {
       return { sessions, solves, activeSessionId }
     }
 
+    case 'importSolves': {
+      const solves = { ...state.solves }
+      for (const s of action.solves) solves[s.id] = s
+      return { ...state, solves }
+    }
+
     default:
       return state
   }
@@ -150,6 +157,7 @@ interface DataContextValue {
   solves: Solve[]
   stats: SessionStats
   addSolve: (input: NewSolveInput) => void
+  importSolves: (rows: { timeMs: number; penalty: Penalty; scramble: string; createdAt: number }[]) => void
   setPenalty: (id: string, penalty: Penalty) => void
   setComment: (id: string, comment: string) => void
   deleteSolve: (id: string) => void
@@ -209,6 +217,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
     pushSolve(solve)
   }, [])
 
+  const importSolves = useCallback(
+    (rows: { timeMs: number; penalty: Penalty; scramble: string; createdAt: number }[]) => {
+      const sessionId = stateRef.current.activeSessionId
+      const event = stateRef.current.sessions[sessionId]?.event ?? '333'
+      const solves: Solve[] = rows.map((r) => ({
+        id: uid(),
+        sessionId,
+        timeMs: r.timeMs,
+        penalty: r.penalty,
+        scramble: r.scramble,
+        event,
+        createdAt: r.createdAt,
+      }))
+      dispatch({ type: 'importSolves', solves })
+      for (const s of solves) pushSolve(s)
+    },
+    [],
+  )
+
   const setPenalty = useCallback((id: string, penalty: Penalty) => {
     dispatch({ type: 'setPenalty', id, penalty })
     const solve = stateRef.current.solves[id]
@@ -265,6 +292,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       solves,
       stats: computeStats(solves),
       addSolve,
+      importSolves,
       setPenalty,
       setComment,
       deleteSolve,
@@ -276,6 +304,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [
     state,
     addSolve,
+    importSolves,
     setPenalty,
     setComment,
     deleteSolve,
