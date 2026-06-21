@@ -1,25 +1,81 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Toaster } from 'sonner'
-import { DataProvider } from '@/lib/data/store'
+import { DataProvider, useData } from '@/lib/data/store'
 import { AlgProgressProvider } from '@/lib/algs/progressStore'
+import { useTheme } from '@/hooks/useTheme'
 import { TimerScreen } from '@/app/TimerScreen'
 import { TrainerView } from '@/components/trainer/TrainerView'
+import { CommandPalette, type Command } from '@/components/layout/CommandPalette'
 import type { View } from '@/components/layout/NavTabs'
 
-export default function App() {
+function AppShell() {
   const [view, setView] = useState<View>('timer')
+  const [focus, setFocus] = useState(false)
+  const { theme, toggleTheme } = useTheme()
+  const { sessions, activeSession, addSession, setActiveSession } = useData()
 
+  const commands = useMemo<Command[]>(() => {
+    const base: Command[] = [
+      { id: 'timer', label: 'Go to Timer', group: 'Navigate', run: () => setView('timer') },
+      { id: 'trainer', label: 'Go to Trainer', group: 'Navigate', run: () => setView('trainer') },
+      {
+        id: 'new-scramble',
+        label: 'New scramble',
+        group: 'Timer',
+        run: () => window.dispatchEvent(new CustomEvent('cube:new-scramble')),
+      },
+      { id: 'focus', label: focus ? 'Exit focus mode' : 'Enter focus mode', group: 'View', run: () => setFocus((f) => !f) },
+      {
+        id: 'theme',
+        label: theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode',
+        group: 'View',
+        run: toggleTheme,
+      },
+      {
+        id: 'new-session',
+        label: 'New session',
+        group: 'Sessions',
+        run: () => addSession(`Session ${sessions.length + 1}`),
+      },
+    ]
+    const sessionCmds: Command[] = sessions
+      .filter((s) => s.id !== activeSession.id)
+      .map((s) => ({
+        id: `session-${s.id}`,
+        label: `Switch to: ${s.name}`,
+        group: 'Sessions',
+        run: () => setActiveSession(s.id),
+      }))
+    return [...base, ...sessionCmds]
+  }, [view, focus, theme, sessions, activeSession.id, toggleTheme, addSession, setActiveSession])
+
+  return (
+    <>
+      {view === 'timer' ? (
+        <TimerScreen
+          view={view}
+          onNavigate={setView}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          focus={focus}
+          onToggleFocus={() => setFocus((f) => !f)}
+        />
+      ) : (
+        <TrainerView view={view} onNavigate={setView} theme={theme} onToggleTheme={toggleTheme} />
+      )}
+      <CommandPalette commands={commands} />
+    </>
+  )
+}
+
+export default function App() {
   return (
     <DataProvider>
       <AlgProgressProvider>
-        {view === 'timer' ? (
-          <TimerScreen view={view} onNavigate={setView} />
-        ) : (
-          <TrainerView view={view} onNavigate={setView} />
-        )}
+        <AppShell />
       </AlgProgressProvider>
       <Toaster
-        theme="dark"
+        theme="system"
         position="bottom-center"
         toastOptions={{
           style: {

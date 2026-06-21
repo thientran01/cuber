@@ -1,9 +1,10 @@
-import { useState } from 'react'
-import { Eye } from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
+import { CornersIn, CornersOut, Eye } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import { useData } from '@/lib/data/store'
 import { useScramble } from '@/hooks/useScramble'
 import { useTimer } from '@/hooks/useTimer'
+import type { Theme } from '@/hooks/useTheme'
 import { formatMs, formatSolveTime } from '@/lib/format'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
@@ -15,7 +16,16 @@ import { StatsBar } from '@/components/stats/StatsBar'
 import { StatsSheet } from '@/components/stats/StatsSheet'
 import { SessionSwitcher } from '@/components/sessions/SessionSwitcher'
 
-export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) {
+interface Props {
+  view: View
+  onNavigate: (view: View) => void
+  theme: Theme
+  onToggleTheme: () => void
+  focus: boolean
+  onToggleFocus: () => void
+}
+
+export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onToggleFocus }: Props) {
   const {
     sessions,
     activeSession,
@@ -30,6 +40,13 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
   const { scramble, next } = useScramble(activeSession.event)
   const [inspection, setInspection] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+
+  // "New scramble" command (from the palette) regenerates the scramble.
+  useEffect(() => {
+    const handler = () => void next()
+    window.addEventListener('cube:new-scramble', handler)
+    return () => window.removeEventListener('cube:new-scramble', handler)
+  }, [next])
 
   const timer = useTimer({
     inspection,
@@ -62,9 +79,12 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
   const fade = (hidden: boolean) =>
     `transition-opacity duration-200 ${hidden ? 'pointer-events-none opacity-0' : 'opacity-100'}`
 
+  // Header + sidebar hide while timing OR in focus mode; the scramble/timer stay.
+  const chromeHidden = timing || focus
+
   return (
     <div className="flex h-dvh overflow-hidden bg-bg text-fg">
-      <aside className={`flex w-72 shrink-0 flex-col border-r border-border ${fade(timing)}`}>
+      <aside className={`flex w-72 shrink-0 flex-col border-r border-border ${fade(chromeHidden)}`}>
         <div className="border-b border-border p-3">
           <SessionSwitcher
             sessions={sessions}
@@ -89,7 +109,7 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
       </aside>
 
       <main className="relative flex flex-1 flex-col">
-        <header className={`flex h-14 shrink-0 items-center justify-between px-5 ${fade(timing)}`}>
+        <header className={`flex h-14 shrink-0 items-center justify-between px-5 ${fade(chromeHidden)}`}>
           <div className="flex items-center gap-2.5">
             <span className="grid size-6 place-items-center rounded-md bg-accent text-[11px] font-bold text-accent-fg">
               C
@@ -110,7 +130,16 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
               <Eye size={14} />
               Inspection {inspection ? 'on' : 'off'}
             </button>
-            <ThemeToggle />
+            <button
+              type="button"
+              onClick={onToggleFocus}
+              aria-label="Focus mode"
+              title="Focus mode"
+              className="grid size-8 place-items-center rounded-md border border-border text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            >
+              <CornersOut size={15} />
+            </button>
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           </div>
         </header>
 
@@ -129,6 +158,18 @@ export function TimerScreen({ view, onNavigate }: { view: View; onNavigate: (vie
             className={fade(timing)}
           />
         </div>
+
+        {focus && !timing ? (
+          <button
+            type="button"
+            onClick={onToggleFocus}
+            aria-label="Exit focus mode"
+            title="Exit focus mode (⌘K)"
+            className="fixed right-4 top-4 z-20 grid size-9 place-items-center rounded-md border border-border bg-surface text-fg-muted shadow-sm transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            <CornersIn size={16} />
+          </button>
+        ) : null}
       </main>
 
       <StatsSheet

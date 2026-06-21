@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowsClockwise, X } from '@phosphor-icons/react'
 import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
 import { setupScrambleFor } from '@/lib/cube/setupScramble'
+import type { Theme } from '@/hooks/useTheme'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
@@ -14,6 +15,8 @@ import { fade } from '@/lib/motion'
 interface Props {
   view: View
   onNavigate: (view: View) => void
+  theme: Theme
+  onToggleTheme: () => void
 }
 
 type Mode = 'browse' | 'recognize'
@@ -48,7 +51,7 @@ function Segmented<T extends string>({
 }
 
 /** OLL/PLL trainer: reference browser + drill + recognition mode. */
-export function TrainerView({ view, onNavigate }: Props) {
+export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
   const progress = useAlgProgress()
   const [set, setSet] = useState<AlgSet>('OLL')
   const [mode, setMode] = useState<Mode>('browse')
@@ -81,7 +84,7 @@ export function TrainerView({ view, onNavigate }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <NavTabs view={view} onNavigate={onNavigate} />
-          <ThemeToggle />
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         </div>
       </header>
 
