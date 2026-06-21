@@ -56,10 +56,10 @@ function parseSeconds(raw: string): number | null {
     const [m, sec] = s.split(':')
     const mm = parseFloat(m)
     const ss = parseFloat(sec)
-    return Number.isNaN(mm) || Number.isNaN(ss) ? null : mm * 60 + ss
+    return Number.isNaN(mm) || Number.isNaN(ss) || mm < 0 || ss < 0 ? null : mm * 60 + ss
   }
   const v = parseFloat(s)
-  return Number.isNaN(v) ? null : v
+  return Number.isNaN(v) || v < 0 ? null : v
 }
 
 /**
@@ -137,6 +137,13 @@ export function downloadCsv(filename: string, csv: string): void {
   const a = document.createElement('a')
   a.href = url
   a.download = filename
+  a.style.display = 'none'
+  document.body.appendChild(a)
   a.click()
-  URL.revokeObjectURL(url)
+  // Revoke after the click is processed — a synchronous revoke can break the
+  // download on Safari/Firefox (they fetch the blob URL asynchronously).
+  setTimeout(() => {
+    URL.revokeObjectURL(url)
+    a.remove()
+  }, 0)
 }

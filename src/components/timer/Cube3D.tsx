@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { TwistyPlayer } from 'cubing/twisty'
 
 interface Props {
@@ -13,6 +13,10 @@ interface Props {
 export function Cube3D({ scramble, size = 200 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
   const playerRef = useRef<TwistyPlayer | null>(null)
+  // Latest scramble, so a scramble change during the async import isn't lost.
+  const scrambleRef = useRef(scramble)
+  scrambleRef.current = scramble
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -25,20 +29,20 @@ export function Cube3D({ scramble, size = 200 }: Props) {
         background: 'none',
         controlPanel: 'none',
         hintFacelets: 'none',
-        experimentalSetupAlg: scramble,
+        experimentalSetupAlg: scrambleRef.current,
         alg: '',
       })
       player.style.width = '100%'
       player.style.height = '100%'
       hostRef.current.replaceChildren(player)
       playerRef.current = player
+      setLoaded(true)
     })()
     return () => {
       cancelled = true
       playerRef.current?.remove()
       playerRef.current = null
     }
-    // Mount once; scramble updates handled below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -46,5 +50,10 @@ export function Cube3D({ scramble, size = 200 }: Props) {
     if (playerRef.current) playerRef.current.experimentalSetupAlg = scramble
   }, [scramble])
 
-  return <div ref={hostRef} style={{ width: size, height: size }} />
+  return (
+    <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+      <div ref={hostRef} style={{ width: size, height: size }} />
+      {loaded ? null : <span className="absolute text-xs text-fg-subtle">Loading 3D…</span>}
+    </div>
+  )
 }

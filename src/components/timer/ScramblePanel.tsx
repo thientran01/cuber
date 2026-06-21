@@ -56,6 +56,8 @@ export function ScramblePanel({ scramble, event, className }: Props) {
               key={v}
               type="button"
               onClick={() => pick(v)}
+              aria-pressed={view === v}
+              aria-label={`${v} cube view`}
               className={`rounded-md px-2.5 py-0.5 transition-colors ${
                 view === v ? 'bg-surface-2 text-fg' : 'text-fg-muted hover:text-fg'
               }`}

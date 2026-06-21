@@ -60,6 +60,9 @@ export function CommandPalette({ commands }: { commands: Command[] }) {
       onClick={() => setOpen(false)}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
         className="w-full max-w-lg overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
@@ -86,10 +89,15 @@ export function CommandPalette({ commands }: { commands: Command[] }) {
               setActive(0)
             }}
             placeholder="Type a command…"
+            aria-label="Command palette"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-palette-list"
+            aria-activedescendant={filtered[clampedActive] ? `command-${filtered[clampedActive].id}` : undefined}
             className="w-full bg-transparent py-3 text-sm text-fg outline-none placeholder:text-fg-subtle"
           />
         </div>
-        <ul className="max-h-72 overflow-y-auto p-1.5">
+        <ul id="command-palette-list" role="listbox" className="max-h-72 overflow-y-auto p-1.5">
           {filtered.length === 0 ? (
             <li className="px-3 py-6 text-center text-xs text-fg-subtle">No commands</li>
           ) : (
@@ -97,6 +105,9 @@ export function CommandPalette({ commands }: { commands: Command[] }) {
               <li key={cmd.id}>
                 <button
                   type="button"
+                  id={`command-${cmd.id}`}
+                  role="option"
+                  aria-selected={i === clampedActive}
                   onMouseMove={() => setActive(i)}
                   onClick={() => run(cmd)}
                   className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm ${

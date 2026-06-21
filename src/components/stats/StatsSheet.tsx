@@ -34,8 +34,8 @@ export function StatsSheet({ open, onOpenChange, solves, stats, sessionName }: P
           <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-5">
             <Drawer.Title className="text-sm font-medium text-fg">{sessionName} · Stats</Drawer.Title>
             <Drawer.Close
-              className="rounded-md p-1 text-fg-muted hover:bg-surface-2 hover:text-fg"
-              aria-label="Close"
+              className="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-surface-2 hover:text-fg"
+              aria-label="Close stats"
             >
               <X size={16} />
             </Drawer.Close>
@@ -51,7 +51,7 @@ export function StatsSheet({ open, onOpenChange, solves, stats, sessionName }: P
               <Tile label="ao100" value={c >= 100 ? formatStat(stats.currentAo100, true) : '—'} />
               <Tile label="best ao5" value={formatStat(stats.bestAo5)} accent />
               <Tile label="best ao12" value={formatStat(stats.bestAo12)} accent />
-              <Tile label="σ dev" value={formatStat(stats.stdDev)} />
+              <Tile label="std dev" value={formatStat(stats.stdDev)} />
             </div>
 
             <section>
