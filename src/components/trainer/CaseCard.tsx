@@ -7,10 +7,12 @@ interface Props {
   onDrill?: (c: AlgCase) => void
 }
 
-const DOT: Record<string, string> = {
-  unknown: 'bg-fg-subtle/40',
+// Distinguished by shape as well as color (colorblind-safe): hollow ring /
+// solid / solid-with-halo for unknown / learning / learned.
+const DOT_STYLE: Record<string, string> = {
+  unknown: 'border-2 border-fg-subtle/60',
   learning: 'bg-warn',
-  learned: 'bg-ready',
+  learned: 'bg-ready ring-2 ring-ready/30',
 }
 
 /** Reference card: status dot + recognition diagram + name + algorithm. */
@@ -27,10 +29,12 @@ export function CaseCard({ c, onDrill }: Props) {
         <button
           type="button"
           onClick={() => progress.cycleStatus(c.set, c.id)}
-          aria-label={`Status: ${STATUS_LABEL[status]} (click to change)`}
+          aria-label={`Status: ${STATUS_LABEL[status]}. Click to change.`}
           title={STATUS_LABEL[status]}
-          className={`mt-1 size-2.5 shrink-0 rounded-full ${DOT[status]}`}
-        />
+          className="-my-1.5 -ml-1.5 grid shrink-0 place-items-center rounded p-2"
+        >
+          <span className={`size-2.5 rounded-full ${DOT_STYLE[status]}`} />
+        </button>
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="text-sm font-medium text-fg">{title}</span>
           {subtitle ? <span className="text-[11px] text-fg-subtle">{subtitle}</span> : null}
@@ -49,7 +53,7 @@ export function CaseCard({ c, onDrill }: Props) {
         <button
           type="button"
           onClick={() => onDrill(c)}
-          className="mt-0.5 rounded-md border border-border py-1 text-xs text-fg-muted opacity-0 transition-all hover:bg-surface-2 hover:text-fg group-hover:opacity-100"
+          className="mt-0.5 rounded-md border border-border py-1 text-xs text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
         >
           Drill
         </button>

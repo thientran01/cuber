@@ -60,10 +60,12 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
   // Space reveals the answer.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.code === 'Space' && !revealed) {
-        e.preventDefault()
-        reveal()
-      }
+      if (e.code !== 'Space' || revealed) return
+      // If a button is focused, let it handle Space itself (avoid a double-fire).
+      const el = document.activeElement
+      if (el && el.tagName === 'BUTTON') return
+      e.preventDefault()
+      reveal()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
