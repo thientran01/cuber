@@ -2,15 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowsClockwise, X } from '@phosphor-icons/react'
 import { caseTitle, OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
-import { TWO_LOOK_BY_SET, twoLookCount } from '@/lib/algs/twoLook'
+import { TWO_LOOK_BY_SET, twoLookCases, twoLookCount } from '@/lib/algs/twoLook'
 import { setupScrambleFor } from '@/lib/cube/setupScramble'
 import type { Theme } from '@/hooks/useTheme'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
+import { Segmented } from '@/components/layout/Segmented'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { CaseCard } from '@/components/trainer/CaseCard'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
-import { RecognitionTest } from '@/components/trainer/RecognitionTest'
+import { RecognitionTest, type RecognitionScope } from '@/components/trainer/RecognitionTest'
 import { fade } from '@/lib/motion'
 
 interface Props {
@@ -23,40 +24,16 @@ interface Props {
 type Mode = 'browse' | 'recognize'
 
 const SETS: AlgSet[] = ['OLL', 'PLL']
-
-function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: T[]
-  value: T
-  onChange: (v: T) => void
-}) {
-  return (
-    <div role="group" className="flex items-center gap-0.5 rounded-lg border border-border bg-surface p-0.5 text-sm">
-      {options.map((o) => (
-        <button
-          key={o}
-          type="button"
-          onClick={() => onChange(o)}
-          aria-pressed={value === o}
-          className={`rounded-md px-3 py-1 capitalize transition-colors ${
-            value === o ? 'bg-surface-2 text-fg' : 'text-fg-muted hover:text-fg'
-          }`}
-        >
-          {o}
-        </button>
-      ))}
-    </div>
-  )
-}
+const SCOPES: RecognitionScope[] = ['2-look', 'all']
+const scopeLabel = (s: RecognitionScope) => (s === '2-look' ? '2-Look' : 'All')
 
 /** OLL/PLL trainer: reference browser + drill + recognition mode. */
 export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
   const progress = useAlgProgress()
   const [set, setSet] = useState<AlgSet>('OLL')
   const [mode, setMode] = useState<Mode>('browse')
+  // Recognition starts on the 2-look subset — the beginner re-entry path.
+  const [scope, setScope] = useState<RecognitionScope>('2-look')
   const [drill, setDrill] = useState<{ c: AlgCase; scramble: string } | null>(null)
   const drillCloseRef = useRef<HTMLButtonElement>(null)
 
@@ -77,15 +54,18 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
   const cases = set === 'OLL' ? OLL_CASES : PLL_CASES
 
   const counts = useMemo(() => {
+    // In recognize mode the counts track the active scope, so "learned / total"
+    // matches the pool being drilled (e.g. 10 for 2-look OLL, not 57).
+    const pool = mode === 'recognize' && scope === '2-look' ? twoLookCases(set) : cases
     let learned = 0
     let learning = 0
-    for (const c of cases) {
+    for (const c of pool) {
       const s = progress.get(set, c.id).status
       if (s === 'learned') learned += 1
       else if (s === 'learning') learning += 1
     }
-    return { learned, learning, total: cases.length }
-  }, [cases, progress, set])
+    return { learned, learning, total: pool.length }
+  }, [cases, mode, scope, progress, set])
 
   const openDrill = (c: AlgCase) => setDrill({ c, scramble: setupScrambleFor(c.algorithm) })
   const reroll = () => setDrill((d) => (d ? { ...d, scramble: setupScrambleFor(d.c.algorithm) } : d))
@@ -106,8 +86,22 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
       </header>
 
       <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-5 py-3">
-        <Segmented options={SETS} value={set} onChange={setSet} />
-        <Segmented options={['browse', 'recognize'] as Mode[]} value={mode} onChange={setMode} />
+        <Segmented options={SETS} value={set} onChange={setSet} ariaLabel="Algorithm set" />
+        <Segmented
+          options={['browse', 'recognize'] as Mode[]}
+          value={mode}
+          onChange={setMode}
+          ariaLabel="Trainer mode"
+        />
+        {mode === 'recognize' ? (
+          <Segmented
+            options={SCOPES}
+            value={scope}
+            onChange={setScope}
+            getLabel={scopeLabel}
+            ariaLabel="Recognition scope"
+          />
+        ) : null}
         <span className="ml-auto flex items-center gap-3 text-xs">
           <span className="text-ready">{counts.learned} learned</span>
           <span className="text-warn">{counts.learning} learning</span>
@@ -116,7 +110,7 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
       </div>
 
       {mode === 'recognize' ? (
-        <RecognitionTest set={set} />
+        <RecognitionTest set={set} scope={scope} />
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <div className="mx-auto max-w-6xl space-y-10">

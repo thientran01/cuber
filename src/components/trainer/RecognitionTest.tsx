@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Check, X } from '@phosphor-icons/react'
 import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
+import { twoLookCases } from '@/lib/algs/twoLook'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { formatMs } from '@/lib/format'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
+
+/** Which subset of a set's cases recognition draws from. */
+export type RecognitionScope = '2-look' | 'all'
 
 const randomAuf = () => Math.floor(Math.random() * 4)
 
@@ -14,10 +18,14 @@ function pickFrom(cases: AlgCase[]): AlgCase {
 /**
  * Recognition drill: shows a case at a random angle, you recognize it, reveal
  * the answer, then self-grade. Untracked progress feeds per-case status.
+ * `scope` narrows the pool — "2-look" drills only the beginner subset.
  */
-export function RecognitionTest({ set }: { set: AlgSet }) {
+export function RecognitionTest({ set, scope }: { set: AlgSet; scope: RecognitionScope }) {
   const progress = useAlgProgress()
-  const allCases = set === 'OLL' ? OLL_CASES : PLL_CASES
+  const allCases = useMemo(
+    () => (scope === '2-look' ? twoLookCases(set) : set === 'OLL' ? OLL_CASES : PLL_CASES),
+    [set, scope],
+  )
 
   const [current, setCurrent] = useState<AlgCase>(() => pickFrom(allCases))
   const [auf, setAuf] = useState(() => randomAuf())
@@ -42,9 +50,13 @@ export function RecognitionTest({ set }: { set: AlgSet }) {
     [allCases, progress, set],
   )
 
-  // New case when the set changes.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => next(), [set])
+  // New case when the set or scope changes — and reset the score, since the
+  // got/missed tally is meaningless across a different pool of cases.
+  useEffect(() => {
+    next()
+    setTally({ got: 0, missed: 0 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [set, scope])
 
   const reveal = useCallback(() => {
     setElapsed(performance.now() - startedAt)
