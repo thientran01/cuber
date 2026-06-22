@@ -13,6 +13,7 @@ import { Alg } from 'cubing/alg'
 import { cube3x3x3 } from 'cubing/puzzles'
 import { ALL_CASES, OLL_CASES, PLL_CASES, type AlgCase } from './cases'
 import { caseStateAlg } from '../cube/setupScramble'
+import { TWO_LOOK_EO } from './twoLook'
 
 type KPattern = {
   patternData: Record<string, { pieces: number[]; orientation?: number[] }>
@@ -145,6 +146,26 @@ describe('OLL/PLL dataset', () => {
       if (ours !== oracle) mismatches.push(`${c.set} ${c.id}`)
     }
     expect(mismatches, `\nstate mismatch: ${mismatches.join(', ')}\n`).toEqual([])
+  })
+
+  // The 2-look edge-orientation algs only need to flip last-layer edges (corners
+  // are "don't care" in 2-look EO — the diagram greys them out). Verify they're
+  // valid last-layer algs that produce distinct edge-orientation patterns.
+  it('2-look edge-orientation cases only disturb the last layer and are distinct', () => {
+    const edgeSigs = new Set<string>()
+    for (const c of TWO_LOOK_EO) {
+      const norm = normalize(apply(solved, c.algorithm))
+      expect(norm, `${c.name}: centers not solvable`).not.toBeNull()
+      const ch = changedNonCenter(norm!)
+      const bad: string[] = []
+      for (const orbit of Object.keys(ch)) {
+        for (const i of ch[orbit]) if (!llSet[orbit]?.has(i)) bad.push(`${orbit}[${i}]`)
+      }
+      expect(bad, `${c.name} disturbs non-LL ${bad.join(', ')}`).toEqual([])
+      // Distinct by last-layer edge orientation (the only thing EO recognizes).
+      edgeSigs.add((norm!.patternData.EDGES.orientation ?? []).join(''))
+    }
+    expect(edgeSigs.size, 'EO cases must have distinct edge patterns').toBe(TWO_LOOK_EO.length)
   })
 
   it('OLL cases are all distinct (up to AUF)', () => {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowsClockwise, X } from '@phosphor-icons/react'
 import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
+import { TWO_LOOK_BY_SET, twoLookCount } from '@/lib/algs/twoLook'
 import { setupScrambleFor } from '@/lib/cube/setupScramble'
 import type { Theme } from '@/hooks/useTheme'
 import { useAlgProgress } from '@/lib/algs/progressStore'
@@ -118,10 +119,48 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
         <RecognitionTest set={set} />
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
-          <div className="mx-auto grid max-w-6xl grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
-            {cases.map((c) => (
-              <CaseCard key={`${c.set}-${c.id}`} c={c} onDrill={openDrill} />
-            ))}
+          <div className="mx-auto max-w-6xl space-y-10">
+            {/* 2-Look: the beginner path — separated and on top. */}
+            <section className="space-y-5">
+              <div>
+                <h2 className="text-sm font-semibold text-fg">2-Look {set}</h2>
+                <p className="text-xs text-fg-subtle">
+                  Start here — {twoLookCount(set)} algorithms in two steps. The fast way back in.
+                </p>
+              </div>
+              {TWO_LOOK_BY_SET[set].map((step) => (
+                <div key={step.title} className="space-y-2">
+                  <div className="flex items-baseline gap-2">
+                    <h3 className="text-xs font-medium text-fg-muted">{step.title}</h3>
+                    <span className="text-[11px] text-fg-subtle">{step.blurb}</span>
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+                    {step.cases.map((c) => (
+                      <CaseCard
+                        key={`2L-${c.set}-${c.id}`}
+                        c={c}
+                        onDrill={openDrill}
+                        label={c.name}
+                        sublabel={c.set === 'OLL' && /^\d+$/.test(c.id) ? `OLL ${c.id}` : ''}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            {/* Full 1-Look reference: every case. */}
+            <section className="space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold text-fg">Full {set} · 1-Look</h2>
+                <p className="text-xs text-fg-subtle">All {cases.length} cases, one algorithm each.</p>
+              </div>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+                {cases.map((c) => (
+                  <CaseCard key={`${c.set}-${c.id}`} c={c} onDrill={openDrill} />
+                ))}
+              </div>
+            </section>
           </div>
         </div>
       )}
