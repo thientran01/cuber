@@ -38,7 +38,13 @@ export const TWO_LOOK_EO: AlgCase[] = [
 ]
 
 function pick(cases: AlgCase[], ids: string[]): AlgCase[] {
-  return ids.map((id) => cases.find((c) => c.id === id)).filter((c): c is AlgCase => Boolean(c))
+  return ids.map((id) => {
+    const found = cases.find((c) => c.id === id)
+    // Fail loud at module load if an id is renamed/removed in cases.ts, rather
+    // than silently dropping a case from the 2-look set.
+    if (!found) throw new Error(`twoLook: unknown case id "${id}"`)
+    return found
+  })
 }
 
 export const TWO_LOOK_OLL: TwoLookStep[] = [

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { AlgCase } from '@/lib/algs/cases'
+import { caseTitle, type AlgCase } from '@/lib/algs/cases'
 import { caseStateAlg } from '@/lib/cube/setupScramble'
 import { faceletsForAlg } from '@/lib/cube/facelets'
 
@@ -178,7 +178,7 @@ export function CaseDiagram({ c, size = 96, auf = 0 }: Props) {
       height={size}
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       role="img"
-      aria-label={`${c.set} ${c.id} recognition diagram`}
+      aria-label={`${caseTitle(c)} recognition diagram`}
     >
       {/* flaps (omitted for edge-orientation cases) */}
       {!isEo &&

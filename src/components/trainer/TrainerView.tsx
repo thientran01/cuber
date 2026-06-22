@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowsClockwise, X } from '@phosphor-icons/react'
-import { OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
+import { caseTitle, OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
 import { TWO_LOOK_BY_SET, twoLookCount } from '@/lib/algs/twoLook'
 import { setupScrambleFor } from '@/lib/cube/setupScramble'
 import type { Theme } from '@/hooks/useTheme'
@@ -177,7 +177,7 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
             <motion.div
               role="dialog"
               aria-modal="true"
-              aria-label={`${drill.c.set} ${drill.c.id} drill`}
+              aria-label={`${caseTitle(drill.c)} drill`}
               className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl"
               variants={fade}
               initial="hidden"
@@ -186,9 +186,7 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {drill.c.set === 'OLL' ? `OLL ${drill.c.id}` : drill.c.name || drill.c.id}
-                </span>
+                <span className="text-sm font-medium">{caseTitle(drill.c)}</span>
                 <button
                   ref={drillCloseRef}
                   type="button"

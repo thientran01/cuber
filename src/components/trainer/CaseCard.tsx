@@ -1,4 +1,4 @@
-import type { AlgCase } from '@/lib/algs/cases'
+import { caseTitle, type AlgCase } from '@/lib/algs/cases'
 import { STATUS_LABEL, useAlgProgress } from '@/lib/algs/progressStore'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
 
@@ -24,7 +24,7 @@ export function CaseCard({ c, onDrill, label, sublabel }: Props) {
   const progress = useAlgProgress()
   const status = progress.get(c.set, c.id).status
 
-  const title = label ?? (c.set === 'OLL' ? `OLL ${c.id}` : c.name || `${c.id} Perm`)
+  const title = label ?? caseTitle(c)
   const subtitle = sublabel ?? (c.set === 'OLL' ? c.name : c.group)
 
   return (
