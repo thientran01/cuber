@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { caseTitle, type AlgCase } from '@/lib/algs/cases'
-import { caseStateAlg } from '@/lib/cube/setupScramble'
-import { faceletsForAlg } from '@/lib/cube/facelets'
+import { caseFacelets } from '@/lib/cube/caseFacelets'
 
 /**
  * Standard top-down OLL/PLL recognition diagram, drawn from the case's facelets.
@@ -28,28 +27,6 @@ const DONT_CARE = '#9a9aa2' // neutral grey for "any color" (2-look EO corners)
 
 // Corner cells of the U grid (the rest are edges + center).
 const CORNER_CELLS = new Set([0, 2, 6, 8])
-
-// 24 whole-cube orientations, to normalize algs that rotate the cube (A/E/J/V).
-const ROTATIONS = [
-  '', 'y', 'y2', "y'", 'x', 'x y', 'x y2', "x y'", 'x2', 'x2 y', 'x2 y2', "x2 y'",
-  "x'", "x' y", "x' y2", "x' y'", 'z', 'z y', 'z y2', "z y'", "z'", "z' y", "z' y2", "z' y'",
-]
-
-function centersSolved(f: string): boolean {
-  return f[4] === 'U' && f[13] === 'R' && f[22] === 'F' && f[31] === 'D' && f[40] === 'L' && f[49] === 'B'
-}
-
-const AUF = ['', 'U', 'U2', "U'"]
-
-/** Case facelets in upright (centers-solved) orientation, optionally pre-rotated by AUF. */
-function caseFacelets(algorithm: string, auf: number): string {
-  const base = `${caseStateAlg(algorithm)} ${AUF[auf % 4]}`.trim()
-  for (const r of ROTATIONS) {
-    const f = faceletsForAlg(r ? `${base} ${r}` : base)
-    if (centersSolved(f)) return f
-  }
-  return faceletsForAlg(base)
-}
 
 // ---- geometry (viewBox 0 0 95 95) ----------------------------------------
 const S = 20 // cell size
