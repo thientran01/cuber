@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowsClockwise, X } from '@phosphor-icons/react'
+import { useCallback, useMemo, useState } from 'react'
 import { caseTitle, OLL_CASES, PLL_CASES, type AlgCase, type AlgSet } from '@/lib/algs/cases'
 import { TWO_LOOK_BY_SET, twoLookCases, twoLookCount } from '@/lib/algs/twoLook'
-import { setupScrambleFor } from '@/lib/cube/setupScramble'
+import { decompositionFor } from '@/lib/algs/triggers'
 import type { Theme } from '@/hooks/useTheme'
 import { useAlgProgress } from '@/lib/algs/progressStore'
 import { NavTabs, type View } from '@/components/layout/NavTabs'
@@ -11,8 +9,8 @@ import { Segmented } from '@/components/layout/Segmented'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { CaseCard } from '@/components/trainer/CaseCard'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
+import { DrillModal, type DrillItem } from '@/components/trainer/DrillModal'
 import { RecognitionTest, type RecognitionScope } from '@/components/trainer/RecognitionTest'
-import { fade } from '@/lib/motion'
 
 interface Props {
   view: View
@@ -34,22 +32,8 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
   const [mode, setMode] = useState<Mode>('browse')
   // Recognition starts on the 2-look subset — the beginner re-entry path.
   const [scope, setScope] = useState<RecognitionScope>('2-look')
-  const [drill, setDrill] = useState<{ c: AlgCase; scramble: string } | null>(null)
-  const drillCloseRef = useRef<HTMLButtonElement>(null)
-
-  // Drill modal: close on Esc and move focus into the dialog when it opens.
-  useEffect(() => {
-    if (!drill) return
-    const raf = requestAnimationFrame(() => drillCloseRef.current?.focus())
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setDrill(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [drill])
+  const [drill, setDrill] = useState<DrillItem | null>(null)
+  const closeDrill = useCallback(() => setDrill(null), [])
 
   const cases = set === 'OLL' ? OLL_CASES : PLL_CASES
 
@@ -67,8 +51,8 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
     return { learned, learning, total: pool.length }
   }, [cases, mode, scope, progress, set])
 
-  const openDrill = (c: AlgCase) => setDrill({ c, scramble: setupScrambleFor(c.algorithm) })
-  const reroll = () => setDrill((d) => (d ? { ...d, scramble: setupScrambleFor(d.c.algorithm) } : d))
+  const openDrill = (c: AlgCase) =>
+    setDrill({ title: caseTitle(c), algorithm: c.algorithm, diagram: <CaseDiagram c={c} size={156} /> })
 
   return (
     <div className="flex h-dvh flex-col bg-bg text-fg">
@@ -136,6 +120,7 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
                         onDrill={openDrill}
                         label={c.name}
                         sublabel={c.set === 'OLL' && /^\d+$/.test(c.id) ? `OLL ${c.id}` : ''}
+                        decomposition={decompositionFor(c.set, c.id)}
                       />
                     ))}
                   </div>
@@ -159,71 +144,7 @@ export function TrainerView({ view, onNavigate, theme, onToggleTheme }: Props) {
         </div>
       )}
 
-      <AnimatePresence>
-        {drill ? (
-          <motion.div
-            className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setDrill(null)}
-          >
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-label={`${caseTitle(drill.c)} drill`}
-              className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-2xl"
-              variants={fade}
-              initial="hidden"
-              animate="show"
-              exit="exit"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-medium">{caseTitle(drill.c)}</span>
-                <button
-                  ref={drillCloseRef}
-                  type="button"
-                  onClick={() => setDrill(null)}
-                  aria-label="Close drill"
-                  className="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-surface-2 hover:text-fg"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              <div className="flex justify-center py-2">
-                <CaseDiagram c={drill.c} size={156} />
-              </div>
-
-              <code className="nums mb-4 block text-center text-sm text-fg">{drill.c.algorithm}</code>
-
-              <div className="rounded-lg border border-border bg-surface-2 p-3">
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-[11px] uppercase tracking-wide text-fg-subtle">
-                    Setup scramble
-                  </span>
-                  <button
-                    type="button"
-                    onClick={reroll}
-                    aria-label="New scramble"
-                    className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-fg-muted hover:text-fg"
-                  >
-                    <ArrowsClockwise size={12} /> New
-                  </button>
-                </div>
-                <code className="nums block text-xs leading-relaxed text-fg-muted">
-                  {drill.scramble}
-                </code>
-              </div>
-
-              <p className="mt-3 text-center text-[11px] text-fg-subtle">
-                Apply the scramble, then practice the algorithm.
-              </p>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <DrillModal item={drill} onClose={closeDrill} />
     </div>
   )
 }

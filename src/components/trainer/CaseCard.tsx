@@ -1,5 +1,6 @@
 import { caseTitle, type AlgCase } from '@/lib/algs/cases'
 import { STATUS_LABEL, useAlgProgress } from '@/lib/algs/progressStore'
+import { triggerById, type Decomposition } from '@/lib/algs/triggers'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
 
 interface Props {
@@ -9,6 +10,43 @@ interface Props {
   label?: string
   /** Override the subtitle. Pass '' to hide it. */
   sublabel?: string
+  /** Trigger breakdown shown under the algorithm (2-look cards only). */
+  decomposition?: Decomposition
+}
+
+/**
+ * Trigger breakdown: accent-tinted pills are recognized triggers (sexy, sledge,
+ * Sune…); muted pills are setup/glue. M-slice algs have no R/U/F structure.
+ */
+function DecompositionRow({ d }: { d: Decomposition }) {
+  if (!d.exactMatch) {
+    return <p className="text-center text-[10px] leading-snug text-fg-muted">M-slice — learn as one unit</p>
+  }
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1">
+        <span className="text-[10px] text-fg-muted">=</span>
+        {d.steps.map((s, i) => {
+          const trig = triggerById(s.label)
+          return (
+            <span
+              key={i}
+              title={trig?.name ?? s.label}
+              className={`nums rounded px-1 py-0.5 text-[10px] leading-none ${
+                trig
+                  ? 'border border-accent/30 bg-accent/10 text-accent'
+                  : 'border border-border bg-surface-2 text-fg-muted'
+              }`}
+            >
+              {s.notation}
+            </span>
+          )
+        })}
+      </div>
+      {/* The teaching reading, surfaced visibly (not just as a hover title). */}
+      <p className="text-center text-[10px] leading-snug text-fg-muted">{d.note}</p>
+    </div>
+  )
 }
 
 // Distinguished by shape as well as color (colorblind-safe): hollow ring /
@@ -20,7 +58,7 @@ const DOT_STYLE: Record<string, string> = {
 }
 
 /** Reference card: status dot + recognition diagram + name + algorithm. */
-export function CaseCard({ c, onDrill, label, sublabel }: Props) {
+export function CaseCard({ c, onDrill, label, sublabel, decomposition }: Props) {
   const progress = useAlgProgress()
   const status = progress.get(c.set, c.id).status
 
@@ -53,11 +91,13 @@ export function CaseCard({ c, onDrill, label, sublabel }: Props) {
         {c.algorithm}
       </code>
 
+      {decomposition ? <DecompositionRow d={decomposition} /> : null}
+
       {onDrill ? (
         <button
           type="button"
           onClick={() => onDrill(c)}
-          className="mt-0.5 rounded-md border border-border py-1 text-xs text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          className="mt-0.5 rounded-md border border-border py-1 text-xs text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           Drill
         </button>
