@@ -5,10 +5,22 @@
  * a one-time WASM warm-up). To make "next scramble" feel instant we keep a small
  * pre-generated queue per event and refill it in the background.
  */
-import { randomScrambleForEvent } from 'cubing/scramble'
 import type { CubeEvent } from '@/lib/types'
 
 const QUEUE_TARGET = 4
+
+// Lazy-load cubing's scramble engine instead of importing it at module top
+// level. A static import pulls cubing into the main app-entry chunk, where Vite
+// hoists the comlink `exposeAPI` helper that cubing's scramble *worker* also
+// needs. The emitted worker then imports the app-entry chunk and crashes on
+// top-level `document`/`HTMLElement` ("Module worker instantiation failed").
+// Loading it dynamically keeps cubing in its own DOM-free chunk that the worker
+// can safely share. Cached after first use.
+let generatorPromise: Promise<typeof import('cubing/scramble').randomScrambleForEvent> | null = null
+function randomScrambleForEvent(event: CubeEvent) {
+  generatorPromise ??= import('cubing/scramble').then((m) => m.randomScrambleForEvent)
+  return generatorPromise.then((gen) => gen(event))
+}
 
 const queues = new Map<CubeEvent, string[]>()
 const filling = new Set<CubeEvent>()

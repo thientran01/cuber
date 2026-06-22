@@ -12,6 +12,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 import { Alg } from 'cubing/alg'
 import { cube3x3x3 } from 'cubing/puzzles'
 import { ALL_CASES, OLL_CASES, PLL_CASES, type AlgCase } from './cases'
+import { caseStateAlg } from '../cube/setupScramble'
 
 type KPattern = {
   patternData: Record<string, { pieces: number[]; orientation?: number[] }>
@@ -129,6 +130,21 @@ describe('OLL/PLL dataset', () => {
       if (bad.length) failures.push(`${c.set} ${c.id} "${c.algorithm}": disturbs ${bad.join(', ')}`)
     }
     expect(failures, `\n${failures.join('\n')}\n`).toEqual([])
+  })
+
+  // `setupScramble.ts` hand-rolls move inversion to keep `cubing` out of the
+  // app's eager bundle (so the scramble worker bundles cleanly). Verify it
+  // matches the cubing.js oracle exactly for every dataset algorithm.
+  it('local move inverter matches cubing Alg.invert for every alg', () => {
+    // Compare cube *states*, not strings: cubing stringifies an inverted double
+    // move as `U2'` while ours emits `U2` (identical move, different notation).
+    const mismatches: string[] = []
+    for (const c of ALL_CASES) {
+      const ours = JSON.stringify(apply(solved, caseStateAlg(c.algorithm)).patternData)
+      const oracle = JSON.stringify(apply(solved, new Alg(c.algorithm).invert().toString()).patternData)
+      if (ours !== oracle) mismatches.push(`${c.set} ${c.id}`)
+    }
+    expect(mismatches, `\nstate mismatch: ${mismatches.join(', ')}\n`).toEqual([])
   })
 
   it('OLL cases are all distinct (up to AUF)', () => {
