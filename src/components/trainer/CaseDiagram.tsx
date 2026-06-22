@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { AlgCase } from '@/lib/algs/cases'
+import { caseTitle, type AlgCase } from '@/lib/algs/cases'
 import { caseStateAlg } from '@/lib/cube/setupScramble'
 import { faceletsForAlg } from '@/lib/cube/facelets'
 
@@ -24,6 +24,10 @@ const COLORS: Record<string, string> = {
   B: '#2f6fdb', // blue
 }
 const UNORIENTED = '#3a3a40' // dark grey for a not-oriented OLL sticker
+const DONT_CARE = '#9a9aa2' // neutral grey for "any color" (2-look EO corners)
+
+// Corner cells of the U grid (the rest are edges + center).
+const CORNER_CELLS = new Set([0, 2, 6, 8])
 
 // 24 whole-cube orientations, to normalize algs that rotate the cube (A/E/J/V).
 const ROTATIONS = [
@@ -164,6 +168,9 @@ interface Props {
 export function CaseDiagram({ c, size = 96, auf = 0 }: Props) {
   const f = useMemo(() => caseFacelets(c.algorithm, auf), [c.algorithm, auf])
   const isOll = c.set === 'OLL'
+  // 2-look edge-orientation ("cross") cases: recognized by edge pattern only, so
+  // corners are drawn as "don't care" and side flaps are omitted.
+  const isEo = isOll && c.group === 'orient-edges'
 
   return (
     <svg
@@ -171,22 +178,27 @@ export function CaseDiagram({ c, size = 96, auf = 0 }: Props) {
       height={size}
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       role="img"
-      aria-label={`${c.set} ${c.id} recognition diagram`}
+      aria-label={`${caseTitle(c)} recognition diagram`}
     >
-      {/* flaps */}
-      {FLAPS.map((fl) => {
-        const isU = f[fl.idx] === 'U'
-        const fill = isOll ? (isU ? COLORS.U : 'transparent') : COLORS[f[fl.idx]]
-        if (isOll && !isU) return null
-        return (
-          <rect key={fl.idx} x={fl.x} y={fl.y} width={fl.w} height={fl.h} rx={1} fill={fill} />
-        )
-      })}
+      {/* flaps (omitted for edge-orientation cases) */}
+      {!isEo &&
+        FLAPS.map((fl) => {
+          const isU = f[fl.idx] === 'U'
+          const fill = isOll ? (isU ? COLORS.U : 'transparent') : COLORS[f[fl.idx]]
+          if (isOll && !isU) return null
+          return <rect key={fl.idx} x={fl.x} y={fl.y} width={fl.w} height={fl.h} rx={1} fill={fill} />
+        })}
 
       {/* U face 3x3 */}
       {Array.from({ length: 9 }, (_, u) => {
         const { x, y } = cell(u)
-        const fill = isOll ? (f[u] === 'U' ? COLORS.U : UNORIENTED) : COLORS[f[u]]
+        const fill = !isOll
+          ? COLORS[f[u]]
+          : isEo && CORNER_CELLS.has(u)
+            ? DONT_CARE
+            : f[u] === 'U'
+              ? COLORS.U
+              : UNORIENTED
         return <rect key={u} x={x} y={y} width={S} height={S} rx={2.5} fill={fill} stroke="#0a0a0b" strokeWidth={1.5} />
       })}
 

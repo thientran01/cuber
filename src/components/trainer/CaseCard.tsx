@@ -1,10 +1,14 @@
-import type { AlgCase } from '@/lib/algs/cases'
+import { caseTitle, type AlgCase } from '@/lib/algs/cases'
 import { STATUS_LABEL, useAlgProgress } from '@/lib/algs/progressStore'
 import { CaseDiagram } from '@/components/trainer/CaseDiagram'
 
 interface Props {
   c: AlgCase
   onDrill?: (c: AlgCase) => void
+  /** Override the card title (the 2-look view shows case names, e.g. "Sune"). */
+  label?: string
+  /** Override the subtitle. Pass '' to hide it. */
+  sublabel?: string
 }
 
 // Distinguished by shape as well as color (colorblind-safe): hollow ring /
@@ -16,12 +20,12 @@ const DOT_STYLE: Record<string, string> = {
 }
 
 /** Reference card: status dot + recognition diagram + name + algorithm. */
-export function CaseCard({ c, onDrill }: Props) {
+export function CaseCard({ c, onDrill, label, sublabel }: Props) {
   const progress = useAlgProgress()
   const status = progress.get(c.set, c.id).status
 
-  const title = c.set === 'OLL' ? `OLL ${c.id}` : c.name || `${c.id} Perm`
-  const subtitle = c.set === 'OLL' ? c.name : c.group
+  const title = label ?? caseTitle(c)
+  const subtitle = sublabel ?? (c.set === 'OLL' ? c.name : c.group)
 
   return (
     <div className="group flex flex-col gap-2 rounded-lg border border-border bg-surface p-3 transition-colors hover:border-border-strong">

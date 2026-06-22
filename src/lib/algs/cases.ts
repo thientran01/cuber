@@ -18,6 +18,17 @@ export interface AlgCase {
   probability: string
 }
 
+/**
+ * Human-facing title for a case. Numeric OLL ids read as "OLL 27"; everything
+ * else (PLL perms, the synthetic 2-look "Line"/"Dot"/"L-Shape" cases whose ids
+ * aren't numbers) reads as its name. Used by cards, the drill modal, and the
+ * diagram's aria-label so they never surface a raw synthetic id like "2L-Line".
+ */
+export function caseTitle(c: AlgCase): string {
+  if (c.set === 'OLL' && /^\d+$/.test(c.id)) return `OLL ${c.id}`
+  return c.name || `${c.id} Perm`
+}
+
 export const PLL_CASES: AlgCase[] = [
   { id: 'Aa', set: 'PLL', name: 'Aa Perm', group: 'corners-only', algorithm: "x L2 D2 L' U' L D2 L' U L'", probability: '1/18' },
   { id: 'Ab', set: 'PLL', name: 'Ab Perm', group: 'corners-only', algorithm: "x R2 D2 R U R' D2 R U' R", probability: '1/18' },
