@@ -86,3 +86,8 @@ export const TWO_LOOK_BY_SET: Record<'OLL' | 'PLL', TwoLookStep[]> = {
 export function twoLookCount(set: 'OLL' | 'PLL'): number {
   return TWO_LOOK_BY_SET[set].reduce((n, step) => n + step.cases.length, 0)
 }
+
+/** Flat list of every case in a set's 2-look path (across both steps). */
+export function twoLookCases(set: 'OLL' | 'PLL'): AlgCase[] {
+  return TWO_LOOK_BY_SET[set].flatMap((step) => step.cases)
+}
