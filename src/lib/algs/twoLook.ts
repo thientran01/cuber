@@ -57,8 +57,23 @@ export const TWO_LOOK_OLL: TwoLookStep[] = [
   },
 ]
 
+/**
+ * The standard 2-look corner step — two cases, recognized by the corners only:
+ * headlights (two matching corner stickers on one face → adjacent swap) use the
+ * T-perm; no headlights (diagonal swap) uses the Y-perm. Both R/U/F, no cube
+ * rotations. They permute two edges as a side effect, but edges are fixed in
+ * step 2, so the diagram greys the edges and shows only the corner swap.
+ *
+ * (The corners-only PLLs Aa/Ab/E also work but use awkward x-rotation algs and
+ * aren't how 2-look is taught — this is the conventional pairing.)
+ */
+export const TWO_LOOK_PLL_CORNERS: AlgCase[] = [
+  { id: '2L-Headlights', set: 'PLL', name: 'Headlights', group: 'permute-corners', algorithm: "R U R' U' R' F R2 U' R' U' R U R' F'", probability: '—' },
+  { id: '2L-Diagonal', set: 'PLL', name: 'Diagonal', group: 'permute-corners', algorithm: "F R U' R' U' R U R' F' R U R' U' R' F R F'", probability: '—' },
+]
+
 export const TWO_LOOK_PLL: TwoLookStep[] = [
-  { title: '1 · Permute Corners', blurb: 'Solve the corners', cases: PLL_CASES.filter((c) => c.group === 'corners-only') },
+  { title: '1 · Permute Corners', blurb: 'Headlights or diagonal', cases: TWO_LOOK_PLL_CORNERS },
   { title: '2 · Permute Edges', blurb: 'Solve the edges', cases: PLL_CASES.filter((c) => c.group === 'edges-only') },
 ]
 
