@@ -187,4 +187,29 @@ describe('OLL/PLL dataset', () => {
     const dups = [...bySig.values()].filter((ids) => ids.length > 1)
     expect(dups, `duplicate PLL cases: ${JSON.stringify(dups)}`).toEqual([])
   })
+
+  // Stronger than "disturbs only the last layer": a PLL must be a *pure
+  // permutation* (it never twists a corner or flips an edge), and the
+  // edges-only / corners-only groups must leave the other orbit fully solved.
+  // This catches an alg that's confined to the LL and distinct but still wrong
+  // — e.g. a perm missing its final AUF, which silently scrambles the corners.
+  it('every PLL is a pure permutation with the right orthogonality', () => {
+    const oriented = (o: { orientation?: number[] }) => (o.orientation ?? []).every((x) => x === 0)
+    const orbitSolved = (o: { pieces: number[]; orientation?: number[] }) =>
+      o.pieces.every((p, i) => p === i) && oriented(o)
+    const fail: string[] = []
+    for (const c of PLL_CASES) {
+      const p = normalize(apply(solved, c.algorithm))
+      if (!p) {
+        fail.push(`${c.id}: centers not solvable`)
+        continue
+      }
+      const corners = p.patternData.CORNERS
+      const edges = p.patternData.EDGES
+      if (!oriented(corners) || !oriented(edges)) fail.push(`${c.id}: twists/flips a piece`)
+      if (c.group === 'edges-only' && !orbitSolved(corners)) fail.push(`${c.id} (edges-only): disturbs corners`)
+      if (c.group === 'corners-only' && !orbitSolved(edges)) fail.push(`${c.id} (corners-only): disturbs edges`)
+    }
+    expect(fail, `\n${fail.join('\n')}\n`).toEqual([])
+  })
 })
