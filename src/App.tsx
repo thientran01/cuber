@@ -5,6 +5,7 @@ import { AlgProgressProvider } from '@/lib/algs/progressStore'
 import { useTheme } from '@/hooks/useTheme'
 import { TimerScreen } from '@/app/TimerScreen'
 import { TrainerView } from '@/components/trainer/TrainerView'
+import { TriggersView } from '@/components/triggers/TriggersView'
 import { CommandPalette, type Command } from '@/components/layout/CommandPalette'
 import type { View } from '@/components/layout/NavTabs'
 
@@ -18,6 +19,7 @@ function AppShell() {
     const base: Command[] = [
       { id: 'timer', label: 'Go to Timer', group: 'Navigate', run: () => setView('timer') },
       { id: 'trainer', label: 'Go to Trainer', group: 'Navigate', run: () => setView('trainer') },
+      { id: 'triggers', label: 'Go to Triggers', group: 'Navigate', run: () => setView('triggers') },
       {
         id: 'new-scramble',
         label: 'New scramble',
@@ -66,6 +68,8 @@ function AppShell() {
           focus={focus}
           onToggleFocus={() => setFocus((f) => !f)}
         />
+      ) : view === 'triggers' ? (
+        <TriggersView view={view} onNavigate={setView} theme={theme} onToggleTheme={toggleTheme} />
       ) : (
         <TrainerView view={view} onNavigate={setView} theme={theme} onToggleTheme={toggleTheme} />
       )}
