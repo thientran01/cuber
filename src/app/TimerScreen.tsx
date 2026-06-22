@@ -7,7 +7,8 @@ import { useScramble } from '@/hooks/useScramble'
 import { useTimer } from '@/hooks/useTimer'
 import type { Theme } from '@/hooks/useTheme'
 import { formatMs, formatSolveTime } from '@/lib/format'
-import { NavTabs, type View } from '@/components/layout/NavTabs'
+import type { View } from '@/components/layout/NavTabs'
+import { AppHeader } from '@/components/layout/AppHeader'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { ScramblePanel } from '@/components/timer/ScramblePanel'
 import { TimerDisplay } from '@/components/timer/TimerDisplay'
@@ -116,8 +117,41 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
   const chromeHidden = timing || focus
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-bg text-fg">
-      <aside className={`flex w-72 shrink-0 flex-col border-r border-border ${fade(chromeHidden)}`}>
+    <div className="flex h-dvh flex-col overflow-hidden bg-bg text-fg">
+      <AppHeader
+        view={view}
+        onNavigate={onNavigate}
+        className={fade(chromeHidden)}
+        right={
+          <>
+            <button
+              type="button"
+              onClick={() => setInspection((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors ${
+                inspection
+                  ? 'border-accent/40 bg-accent/10 text-accent'
+                  : 'border-border text-fg-muted hover:bg-surface-2 hover:text-fg'
+              }`}
+            >
+              <Eye size={14} />
+              Inspection {inspection ? 'on' : 'off'}
+            </button>
+            <button
+              type="button"
+              onClick={onToggleFocus}
+              aria-label="Enter focus mode"
+              title="Enter focus mode"
+              className="grid size-8 place-items-center rounded-md border border-border text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
+            >
+              <CornersOut size={15} />
+            </button>
+            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+          </>
+        }
+      />
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <aside className={`flex w-72 shrink-0 flex-col border-r border-border ${fade(chromeHidden)}`}>
         <div className="border-b border-border p-3">
           <SessionSwitcher
             sessions={sessions}
@@ -167,40 +201,6 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
       </aside>
 
       <main className="relative flex flex-1 flex-col">
-        <header className={`flex h-14 shrink-0 items-center justify-between px-5 ${fade(chromeHidden)}`}>
-          <div className="flex items-center gap-2.5">
-            <span className="grid size-6 place-items-center rounded-md bg-accent text-[11px] font-bold text-accent-fg">
-              C
-            </span>
-            <span className="text-sm font-medium tracking-tight">Cube Trainer</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <NavTabs view={view} onNavigate={onNavigate} />
-            <button
-              type="button"
-              onClick={() => setInspection((v) => !v)}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition-colors ${
-                inspection
-                  ? 'border-accent/40 bg-accent/10 text-accent'
-                  : 'border-border text-fg-muted hover:bg-surface-2 hover:text-fg'
-              }`}
-            >
-              <Eye size={14} />
-              Inspection {inspection ? 'on' : 'off'}
-            </button>
-            <button
-              type="button"
-              onClick={onToggleFocus}
-              aria-label="Enter focus mode"
-              title="Enter focus mode"
-              className="grid size-8 place-items-center rounded-md border border-border text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
-            >
-              <CornersOut size={15} />
-            </button>
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-          </div>
-        </header>
-
         <div className="flex flex-1 flex-col items-center justify-center gap-10 px-6 pb-16">
           <ScramblePanel scramble={scramble} event={activeSession.event} className={fade(timing)} />
           <TimerDisplay view={timer} inspection={inspection} idleText={idleText} />
@@ -229,6 +229,7 @@ export function TimerScreen({ view, onNavigate, theme, onToggleTheme, focus, onT
           </button>
         ) : null}
       </main>
+      </div>
 
       <StatsSheet
         open={statsOpen}

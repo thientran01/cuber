@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react'
 import { TRIGGERS, type Trigger, type TriggerCategory } from '@/lib/algs/triggers'
 import type { Theme } from '@/hooks/useTheme'
-import { NavTabs, type View } from '@/components/layout/NavTabs'
+import type { View } from '@/components/layout/NavTabs'
+import { AppHeader } from '@/components/layout/AppHeader'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { DrillModal, type DrillItem } from '@/components/trainer/DrillModal'
 import { TriggerCard } from '@/components/triggers/TriggerCard'
@@ -27,18 +28,12 @@ export function TriggersView({ view, onNavigate, theme, onToggleTheme }: Props) 
 
   return (
     <div className="flex h-dvh flex-col bg-bg text-fg">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-5">
-        <div className="flex items-center gap-2.5">
-          <span className="grid size-6 place-items-center rounded-md bg-accent text-[11px] font-bold text-accent-fg">
-            C
-          </span>
-          <span className="text-sm font-medium tracking-tight">Cube Trainer</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <NavTabs view={view} onNavigate={onNavigate} />
-          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        </div>
-      </header>
+      <AppHeader
+        view={view}
+        onNavigate={onNavigate}
+        className="border-b border-border"
+        right={<ThemeToggle theme={theme} onToggle={onToggleTheme} />}
+      />
 
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
         <div className="mx-auto max-w-6xl space-y-10">
