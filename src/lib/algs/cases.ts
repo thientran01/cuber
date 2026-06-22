@@ -50,7 +50,7 @@ export const PLL_CASES: AlgCase[] = [
   { id: 'Ub', set: 'PLL', name: 'Ub Perm', group: 'edges-only', algorithm: "M2 U' M U2 M' U' M2", probability: '1/18' },
   { id: 'V', set: 'PLL', name: 'V Perm', group: 'diagonal-corner-swap', algorithm: "R' U R' U' y R' F' R2 U' R' U R' F R F", probability: '1/18' },
   { id: 'Y', set: 'PLL', name: 'Y Perm', group: 'diagonal-corner-swap', algorithm: "F R U' R' U' R U R' F' R U R' U' R' F R F'", probability: '1/18' },
-  { id: 'Z', set: 'PLL', name: 'Z Perm', group: 'edges-only', algorithm: "M' U M2 U M2 U M' U2 M2", probability: '1/36' },
+  { id: 'Z', set: 'PLL', name: 'Z Perm', group: 'edges-only', algorithm: "M2 U M2 U M' U2 M2 U2 M' U2", probability: '1/36' },
 ]
 
 export const OLL_CASES: AlgCase[] = [
