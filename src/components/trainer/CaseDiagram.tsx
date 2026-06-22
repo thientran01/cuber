@@ -27,6 +27,8 @@ const DONT_CARE = '#9a9aa2' // neutral grey for "any color" (2-look EO corners)
 
 // Corner cells of the U grid (the rest are edges + center).
 const CORNER_CELLS = new Set([0, 2, 6, 8])
+// Side flaps that belong to edge pieces (greyed in the 2-look corner step).
+const EDGE_FLAP_IDX = new Set([19, 46, 10, 37])
 
 // ---- geometry (viewBox 0 0 95 95) ----------------------------------------
 const S = 20 // cell size
@@ -88,14 +90,16 @@ interface Arrow {
   x2: number
   y2: number
 }
-function pllArrows(f: string): Arrow[] {
+function pllArrows(f: string, cornersOnly = false): Arrow[] {
   const arrows: Arrow[] = []
-  for (const slot of EDGE_SLOTS) {
-    const home = EDGE_SLOTS.find((s) => s.solved === f[slot.flap])
-    if (home && home.u !== slot.u) {
-      const a = cell(slot.u)
-      const b = cell(home.u)
-      arrows.push({ x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy })
+  if (!cornersOnly) {
+    for (const slot of EDGE_SLOTS) {
+      const home = EDGE_SLOTS.find((s) => s.solved === f[slot.flap])
+      if (home && home.u !== slot.u) {
+        const a = cell(slot.u)
+        const b = cell(home.u)
+        arrows.push({ x1: a.cx, y1: a.cy, x2: b.cx, y2: b.cy })
+      }
     }
   }
   for (const slot of CORNER_SLOTS) {
@@ -148,6 +152,9 @@ export function CaseDiagram({ c, size = 96, auf = 0 }: Props) {
   // 2-look edge-orientation ("cross") cases: recognized by edge pattern only, so
   // corners are drawn as "don't care" and side flaps are omitted.
   const isEo = isOll && c.group === 'orient-edges'
+  // 2-look PLL corner step: recognized by corners only, so the edge flaps are
+  // greyed and only the corner-swap arrows are drawn.
+  const isCornerStep = !isOll && c.group === 'permute-corners'
 
   return (
     <svg
@@ -161,8 +168,13 @@ export function CaseDiagram({ c, size = 96, auf = 0 }: Props) {
       {!isEo &&
         FLAPS.map((fl) => {
           const isU = f[fl.idx] === 'U'
-          const fill = isOll ? (isU ? COLORS.U : 'transparent') : COLORS[f[fl.idx]]
           if (isOll && !isU) return null
+          const fill =
+            isCornerStep && EDGE_FLAP_IDX.has(fl.idx)
+              ? DONT_CARE
+              : isOll
+                ? COLORS.U
+                : COLORS[f[fl.idx]]
           return <rect key={fl.idx} x={fl.x} y={fl.y} width={fl.w} height={fl.h} rx={1} fill={fill} />
         })}
 
@@ -180,7 +192,7 @@ export function CaseDiagram({ c, size = 96, auf = 0 }: Props) {
       })}
 
       {/* PLL permutation arrows */}
-      {!isOll && pllArrows(f).map((a, i) => <ArrowLine key={i} a={a} />)}
+      {!isOll && pllArrows(f, isCornerStep).map((a, i) => <ArrowLine key={i} a={a} />)}
     </svg>
   )
 }
