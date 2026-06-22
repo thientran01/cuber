@@ -74,6 +74,9 @@ function AppShell() {
         <TrainerView view={view} onNavigate={setView} theme={theme} onToggleTheme={toggleTheme} />
       )}
       <CommandPalette commands={commands} />
+      {/* In AppShell so it follows the in-app light/dark toggle, not the OS.
+          richColors + closeButton give Sonner its signature look. */}
+      <Toaster theme={theme} position="bottom-center" richColors closeButton />
     </>
   )
 }
@@ -84,17 +87,6 @@ export default function App() {
       <AlgProgressProvider>
         <AppShell />
       </AlgProgressProvider>
-      <Toaster
-        theme="system"
-        position="bottom-center"
-        toastOptions={{
-          style: {
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            color: 'var(--fg)',
-          },
-        }}
-      />
     </DataProvider>
   )
 }
